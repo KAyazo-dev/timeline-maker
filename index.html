@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FF14 Raid Timeline Maker ♡</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-bg: #fff5f8;
+            --secondary-bg: #ffffff;
+            --accent-pink: #ff7eb9;
+            --accent-purple: #b794f6;
+            --accent-blue: #7bc7ff;
+            --text-primary: #4a4a4a;
+            --text-secondary: #8b8b8b;
+            --border-color: #ffe5f0;
+            --hover-bg: #fff0f6;
+            --enemy-color: #ff6b9d;
+            --player-color: #6bcfb8;
+            --current-bg: #fff9e6;
+            --current-border: #ffd93d;
+            --passed-bg: #f0f0f0;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #fff5f8 0%, #ffe5f0 50%, #f0f0ff 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 15px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 126, 185, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(123, 199, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(183, 148, 246, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            padding: 0 10px;
+        }
+
+        h1 {
+            font-family: 'Comfortaa', cursive;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        .timer-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 240, 246, 0.9));
+            border: 3px solid var(--accent-pink);
+            border-radius: 20px;
+            padding: 20px 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(255, 126, 185, 0.2);
+        }
+
+        .timer-display {
+            font-family: 'Comfortaa', cursive;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-pink);
+            text-align: center;
+            text-shadow: 2px 2px 10px rgba(255, 126, 185, 0.3);
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .timer-info {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            padding: 8px 10px;
+        }
+
+        .event-card {
+            padding: 10px 12px;
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            overflow: hidden;
+            flex: 0 0 calc(33.333% - 6px) !important;
+            min-width: 200px;
+            margin: 3px;
+        }
+
+        .event-card.next-1 {
+            background: var(--current-bg);
+            border-color: var(--current-border);
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 217, 61, 0.3);
+        }
+
+        .event-card.next-2 {
+            background: linear-gradient(135deg, rgba(255, 240, 246, 0.6), rgba(255, 255, 255, 0.6));
+            border-color: var(--accent-pink);
+            opacity: 0.9;
+        }
+
+        .event-card.next-3 {
+            background: var(--secondary-bg);
+            border-color: var(--border-color);
+            opacity: 0.7;
+        }
+
+        .event-time {
+            font-family: 'Comfortaa', cursive;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--accent-purple);
+            margin-bottom: 5px;
+        }
+
+        .event-card.next-1 .event-time {
+            color: var(--accent-pink);
+            font-size: 1rem;
+        }
+
+        .event-countdown {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .event-card.next-1 .event-countdown {
+            font-weight: 600;
+            color: #d97706;
+        }
+
+        .event-type-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .event-type-badge.type-aoe {
+            background: #ffd93d;
+            color: #d97706;
+        }
+
+        .event-type-badge.type-tank {
+            background: #7bc7ff;
+            color: #0369a1;
+        }
+
+        .event-type-badge.type-danger {
+            background: #ff6b9d;
+            color: white;
+        }
+
+        .event-type-badge.type-normal {
+            background: #e5e7eb;
+            color: var(--text-secondary);
+        }
+
+        .event-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .event-card.next-1 .event-name {
+            font-size: 0.85rem;
+            color: var(--accent-pink);
+        }
+
+        .event-player-skill {
+            font-size: 0.75rem;
+            color: var(--player-color);
+            margin-top: 5px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .event-card.next-1 .event-player-skill {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        @keyframes flipIn {
+            from {
+                transform: rotateX(-90deg);
+                opacity: 0;
+            }
+            to {
+                transform: rotateX(0);
+                opacity: 1;
+            }
+        }
+
+        .event-card.flip-animation {
+            animation: flipIn 0.6s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .event-card {
+                flex: 0 0 calc(100% - 16px);
+            }
+            
+            .timer-info {
+                flex-direction: column;
+            }
+        }
+
+        .next-event {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .next-event-text {
+            font-weight: 600;
+            color: var(--accent-pink);
+            font-size: 1rem;
+        }
+
+        .controls {
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(255, 126, 185, 0.15);
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px 14px;
+            background: var(--primary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 0 3px rgba(255, 126, 185, 0.15);
+            background: var(--secondary-bg);
+        }
+
+        select.time-select {
+            padding: 10px 14px;
+            background: var(--primary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 90px;
+        }
+
+        select.time-select:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 0 3px rgba(255, 126, 185, 0.15);
+            background: var(--secondary-bg);
+        }
+
+        select.time-select:hover {
+            border-color: var(--accent-purple);
+        }
+
+        select.gimmick-type {
+            padding: 8px 12px;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 140px;
+        }
+
+        select.gimmick-type:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+        }
+
+        select.gimmick-type.type-aoe {
+            border-color: #ffd93d;
+            background: linear-gradient(135deg, #fff9e6, #fffbf0);
+            color: #d97706;
+        }
+
+        select.gimmick-type.type-tank {
+            border-color: #7bc7ff;
+            background: linear-gradient(135deg, #e6f7ff, #f0faff);
+            color: #0369a1;
+        }
+
+        select.gimmick-type.type-danger {
+            border-color: #ff6b9d;
+            background: linear-gradient(135deg, #ffe6f0, #fff0f6);
+            color: #be123c;
+        }
+
+        select.gimmick-type.type-normal {
+            border-color: #d1d5db;
+            background: var(--secondary-bg);
+            color: var(--text-secondary);
+        }
+
+        .enemy-cell-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .enemy-cell-wrapper select {
+            flex-shrink: 0;
+        }
+
+        .enemy-cell-wrapper input {
+            flex: 1;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Comfortaa', cursive;
+            box-shadow: 0 2px 10px rgba(255, 126, 185, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255, 126, 185, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: var(--secondary-bg);
+            border: 2px solid var(--accent-purple);
+            color: var(--accent-purple);
+            box-shadow: 0 2px 10px rgba(183, 148, 246, 0.2);
+            padding: 6px 12px;
+        }
+
+        button.secondary:hover {
+            background: var(--hover-bg);
+            box-shadow: 0 4px 15px rgba(183, 148, 246, 0.3);
+        }
+
+        button.danger {
+            background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+            padding: 6px 12px;
+        }
+
+        button.start-btn {
+            font-size: 1rem;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #6bcfb8, #7bc7ff);
+            box-shadow: 0 4px 15px rgba(107, 207, 184, 0.4);
+        }
+
+        button.start-btn:hover {
+            box-shadow: 0 6px 20px rgba(107, 207, 184, 0.5);
+        }
+
+        button.pause-btn {
+            background: linear-gradient(135deg, #ffd93d, #ffb347);
+            box-shadow: 0 4px 15px rgba(255, 217, 61, 0.4);
+            padding: 12px 30px;
+            font-size: 1rem;
+        }
+
+        button.reset-btn {
+            background: linear-gradient(135deg, #ff6b9d, #b794f6);
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+
+        .timeline-name {
+            font-size: 0.95rem;
+            padding: 10px 14px !important;
+            font-weight: 600;
+            border: 2px solid var(--accent-pink) !important;
+        }
+
+        .table-container {
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            overflow-x: auto;
+            box-shadow: 0 8px 24px rgba(255, 126, 185, 0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(135deg, rgba(255, 126, 185, 0.1), rgba(123, 199, 255, 0.1));
+        }
+
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-family: 'Comfortaa', cursive;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--accent-pink);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        th:first-child {
+            width: 100px;
+        }
+
+        tbody tr {
+            transition: all 0.3s;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover {
+            background: var(--hover-bg);
+        }
+
+        tbody tr.current-event {
+            background: var(--current-bg);
+            border: 2px solid var(--current-border);
+            box-shadow: 0 0 15px rgba(255, 217, 61, 0.3);
+        }
+
+        tbody tr.passed-event {
+            background: var(--passed-bg);
+            opacity: 0.6;
+        }
+
+        tbody tr.passed-event td {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        td {
+            padding: 10px 15px;
+        }
+
+        .time-cell {
+            font-family: 'Comfortaa', cursive;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--accent-purple);
+        }
+
+        .enemy-cell {
+            color: var(--enemy-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .player-cell {
+            color: var(--player-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .cell-input {
+            width: 100%;
+            padding: 6px 10px;
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+
+        .cell-input:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            min-width: auto;
+        }
+
+        .saved-timelines {
+            margin-top: 20px;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 8px 24px rgba(255, 126, 185, 0.15);
+        }
+
+        .saved-timelines h2 {
+            font-family: 'Comfortaa', cursive;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--accent-purple);
+            text-align: center;
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--primary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+
+        .timeline-item:hover {
+            background: var(--hover-bg);
+            border-color: var(--accent-pink);
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(255, 126, 185, 0.2);
+        }
+
+        .timeline-item-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .timeline-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .timer-display {
+                font-size: 2.5rem;
+            }
+
+            .control-row {
+                flex-direction: column;
+            }
+
+            input[type="text"], button {
+                width: 100%;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        tbody tr {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .current-event {
+            animation: pulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>♡ Timeline Maker ♡</h1>
+        <div class="subtitle">FF14 High-End Raid Timeline Tool</div>
+
+        <div class="timer-section">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                <div class="timer-display" id="timerDisplay">0:00</div>
+                <div style="font-family: 'Comfortaa', cursive; font-size: 1.2rem; font-weight: 600; color: var(--accent-purple);" id="timerTimelineName"></div>
+            </div>
+            <div class="timer-controls">
+                <button class="start-btn" id="startBtn" onclick="startTimer()">▶ 開始</button>
+                <button class="pause-btn" id="pauseBtn" onclick="pauseTimer()" style="display:none;">⏸ 一時停止</button>
+                <button class="reset-btn" onclick="resetTimer()">↺ リセット</button>
+            </div>
+            <div class="timer-info" id="timerInfo" style="display:none;">
+                <div class="event-card next-1" id="eventCard1">
+                    <div class="event-countdown" id="eventCountdown1">-</div>
+                    <div class="event-time" id="eventTime1">-</div>
+                    <div id="eventBadge1"></div>
+                    <div class="event-name" id="eventName1">-</div>
+                    <div class="event-player-skill" id="eventPlayer1"></div>
+                </div>
+                <div class="event-card next-2" id="eventCard2">
+                    <div class="event-time" id="eventTime2">-</div>
+                    <div id="eventBadge2"></div>
+                    <div class="event-name" id="eventName2">-</div>
+                    <div class="event-player-skill" id="eventPlayer2"></div>
+                </div>
+                <div class="event-card next-3" id="eventCard3">
+                    <div class="event-time" id="eventTime3">-</div>
+                    <div id="eventBadge3"></div>
+                    <div class="event-name" id="eventName3">-</div>
+                    <div class="event-player-skill" id="eventPlayer3"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-row">
+                <input type="text" id="timelineName" class="timeline-name" placeholder="タイムライン名を入力（例：絶竜詩戦争 フェーズ1）">
+            </div>
+            <div class="control-row">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="minuteInput" class="time-select">
+                        <option value="0">0分</option>
+                        <option value="1">1分</option>
+                        <option value="2">2分</option>
+                        <option value="3">3分</option>
+                        <option value="4">4分</option>
+                        <option value="5">5分</option>
+                        <option value="6">6分</option>
+                        <option value="7">7分</option>
+                        <option value="8">8分</option>
+                        <option value="9">9分</option>
+                        <option value="10">10分</option>
+                        <option value="11">11分</option>
+                        <option value="12">12分</option>
+                        <option value="13">13分</option>
+                        <option value="14">14分</option>
+                        <option value="15">15分</option>
+                    </select>
+                    <span style="font-weight: 600; color: var(--accent-purple);">:</span>
+                    <select id="secondInput" class="time-select">
+                        <option value="0">00秒</option>
+                        <option value="1">01秒</option>
+                        <option value="2">02秒</option>
+                        <option value="3">03秒</option>
+                        <option value="4">04秒</option>
+                        <option value="5">05秒</option>
+                        <option value="6">06秒</option>
+                        <option value="7">07秒</option>
+                        <option value="8">08秒</option>
+                        <option value="9">09秒</option>
+                        <option value="10">10秒</option>
+                        <option value="11">11秒</option>
+                        <option value="12">12秒</option>
+                        <option value="13">13秒</option>
+                        <option value="14">14秒</option>
+                        <option value="15">15秒</option>
+                        <option value="16">16秒</option>
+                        <option value="17">17秒</option>
+                        <option value="18">18秒</option>
+                        <option value="19">19秒</option>
+                        <option value="20">20秒</option>
+                        <option value="21">21秒</option>
+                        <option value="22">22秒</option>
+                        <option value="23">23秒</option>
+                        <option value="24">24秒</option>
+                        <option value="25">25秒</option>
+                        <option value="26">26秒</option>
+                        <option value="27">27秒</option>
+                        <option value="28">28秒</option>
+                        <option value="29">29秒</option>
+                        <option value="30">30秒</option>
+                        <option value="31">31秒</option>
+                        <option value="32">32秒</option>
+                        <option value="33">33秒</option>
+                        <option value="34">34秒</option>
+                        <option value="35">35秒</option>
+                        <option value="36">36秒</option>
+                        <option value="37">37秒</option>
+                        <option value="38">38秒</option>
+                        <option value="39">39秒</option>
+                        <option value="40">40秒</option>
+                        <option value="41">41秒</option>
+                        <option value="42">42秒</option>
+                        <option value="43">43秒</option>
+                        <option value="44">44秒</option>
+                        <option value="45">45秒</option>
+                        <option value="46">46秒</option>
+                        <option value="47">47秒</option>
+                        <option value="48">48秒</option>
+                        <option value="49">49秒</option>
+                        <option value="50">50秒</option>
+                        <option value="51">51秒</option>
+                        <option value="52">52秒</option>
+                        <option value="53">53秒</option>
+                        <option value="54">54秒</option>
+                        <option value="55">55秒</option>
+                        <option value="56">56秒</option>
+                        <option value="57">57秒</option>
+                        <option value="58">58秒</option>
+                        <option value="59">59秒</option>
+                    </select>
+                </div>
+                <select id="gimmickTypeInput" class="gimmick-type type-normal">
+                    <option value="normal">通常攻撃</option>
+                    <option value="aoe">全体攻撃</option>
+                    <option value="tank">タンク強攻撃</option>
+                    <option value="danger">要注意ギミック</option>
+                </select>
+                <input type="text" id="enemyInput" placeholder="敵の攻撃・スキル名">
+                <input type="text" id="playerInput" placeholder="自分のスキル・メモ">
+                <button onclick="addRow()">追加</button>
+            </div>
+            <div class="control-row">
+                <button class="secondary" onclick="saveTimeline()">💾 タイムラインを保存</button>
+                <button class="secondary" onclick="clearTimeline()">🗑️ クリア</button>
+                <button class="secondary" onclick="exportTimeline()">📤 エクスポート</button>
+                <button class="secondary" onclick="importTimeline()">📥 インポート</button>
+                <button class="secondary" onclick="importCSV()">📊 CSV読み込み</button>
+                <button class="secondary" onclick="exportCSV()">📊 CSV出力</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>敵の攻撃</th>
+                        <th>自分のスキル</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="timelineBody">
+                    <tr>
+                        <td colspan="4" class="empty-state">タイムラインを追加してください ♡</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="saved-timelines">
+            <h2>♡ 保存されたタイムライン ♡</h2>
+            <div id="savedTimelinesList"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentTimeline = [];
+        let currentTimelineName = '';
+        let timerRunning = false;
+        let timerInterval = null;
+        let elapsedTime = 0;
+        let currentEventIndex = -1;
+
+        function parseTime(timeStr) {
+            const parts = timeStr.split(':');
+            if (parts.length === 2) {
+                const minutes = parseInt(parts[0]) || 0;
+                const seconds = parseInt(parts[1]) || 0;
+                return minutes * 60 + seconds;
+            }
+            return parseInt(timeStr) || 0;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (currentTimeline.length === 0) {
+                return;
+            }
+
+            // タイムライン名を表示
+            const timelineName = document.getElementById('timelineName').value.trim();
+            document.getElementById('timerTimelineName').textContent = timelineName ? `- ${timelineName}` : '';
+
+            timerRunning = true;
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'inline-block';
+            document.getElementById('timerInfo').style.display = 'block';
+
+            timerInterval = setInterval(() => {
+                elapsedTime++;
+                updateTimerDisplay();
+                updateCurrentEvent();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            timerRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            elapsedTime = 0;
+            currentEventIndex = -1;
+            updateTimerDisplay();
+            updateCurrentEvent();
+            document.getElementById('timerInfo').style.display = 'none';
+            document.getElementById('timerTimelineName').textContent = '';
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('timerDisplay').textContent = formatTime(elapsedTime);
+        }
+
+        function updateCurrentEvent() {
+            // 現在のイベントを見つける
+            let newCurrentIndex = -1;
+            for (let i = 0; i < currentTimeline.length; i++) {
+                if (elapsedTime >= currentTimeline[i].time) {
+                    newCurrentIndex = i;
+                } else {
+                    break;
+                }
+            }
+
+            // インデックスが変わった時だけテーブルを更新
+            const indexChanged = currentEventIndex !== newCurrentIndex;
+            currentEventIndex = newCurrentIndex;
+
+            // 次の3つのイベントを表示
+            for (let i = 1; i <= 3; i++) {
+                const nextEventIndex = currentEventIndex + i;
+                const cardClass = `next-${i}`;
+                
+                if (nextEventIndex < currentTimeline.length) {
+                    const nextEvent = currentTimeline[nextEventIndex];
+                    const timeUntil = nextEvent.time - elapsedTime;
+                    
+                    // カウントダウン（1番目のカードのみ）
+                    if (i === 1) {
+                        document.getElementById(`eventCountdown${i}`).textContent = `あと ${timeUntil}秒`;
+                    }
+                    
+                    // 時間
+                    document.getElementById(`eventTime${i}`).textContent = formatTime(nextEvent.time);
+                    
+                    // ギミックタイプバッジ
+                    const gimmickType = nextEvent.gimmickType || 'normal';
+                    const badgeText = {
+                        'normal': '通常',
+                        'aoe': '全体攻撃',
+                        'tank': 'タンク強攻撃',
+                        'danger': '要注意'
+                    }[gimmickType];
+                    document.getElementById(`eventBadge${i}`).innerHTML = 
+                        `<span class="event-type-badge type-${gimmickType}">${badgeText}</span>`;
+                    
+                    // イベント名
+                    document.getElementById(`eventName${i}`).textContent = nextEvent.enemy || '(メモのみ)';
+                    
+                    // 自分のスキルメモ
+                    const playerSkill = nextEvent.player || '';
+                    document.getElementById(`eventPlayer${i}`).textContent = playerSkill ? `→ ${playerSkill}` : '';
+                    
+                    // カードを表示
+                    document.getElementById(`eventCard${i}`).style.display = 'block';
+                    
+                    // インデックスが変わった時にフリップアニメーション
+                    if (indexChanged) {
+                        const card = document.getElementById(`eventCard${i}`);
+                        card.classList.add('flip-animation');
+                        setTimeout(() => card.classList.remove('flip-animation'), 600);
+                    }
+                } else {
+                    // イベントがない場合
+                    if (i === 1 && nextEventIndex >= currentTimeline.length) {
+                        document.getElementById(`eventCountdown${i}`).textContent = '';
+                        document.getElementById(`eventTime${i}`).textContent = '完了';
+                        document.getElementById(`eventBadge${i}`).innerHTML = '';
+                        document.getElementById(`eventName${i}`).textContent = 'お疲れ様でした ♡';
+                        document.getElementById(`eventPlayer${i}`).textContent = '';
+                        document.getElementById(`eventCard${i}`).style.display = 'block';
+                    } else {
+                        document.getElementById(`eventCard${i}`).style.display = 'none';
+                    }
+                }
+            }
+
+            // インデックスが変わった時だけ、行のクラスを更新
+            if (indexChanged) {
+                updateRowClasses();
+            }
+        }
+
+        function updateRowClasses() {
+            const tbody = document.getElementById('timelineBody');
+            const rows = tbody.querySelectorAll('tr');
+            
+            rows.forEach((row, index) => {
+                row.classList.remove('current-event', 'passed-event');
+                
+                if (timerRunning) {
+                    if (index === currentEventIndex) {
+                        row.classList.add('current-event');
+                    } else if (index < currentEventIndex) {
+                        row.classList.add('passed-event');
+                    }
+                }
+            });
+        }
+
+        function addRow() {
+            const minuteInput = document.getElementById('minuteInput');
+            const secondInput = document.getElementById('secondInput');
+            const gimmickTypeInput = document.getElementById('gimmickTypeInput');
+            const enemyInput = document.getElementById('enemyInput');
+            const playerInput = document.getElementById('playerInput');
+
+            const minutes = parseInt(minuteInput.value);
+            const seconds = parseInt(secondInput.value);
+            const timeInSeconds = minutes * 60 + seconds;
+            
+            const gimmickType = gimmickTypeInput.value;
+            const enemy = enemyInput.value.trim();
+            const player = playerInput.value.trim();
+
+            currentTimeline.push({
+                time: timeInSeconds,
+                gimmickType: gimmickType,
+                enemy: enemy,
+                player: player
+            });
+
+            currentTimeline.sort((a, b) => a.time - b.time);
+            renderTimeline();
+
+            gimmickTypeInput.value = 'normal';
+            gimmickTypeInput.className = 'gimmick-type type-normal';
+            enemyInput.value = '';
+            playerInput.value = '';
+            enemyInput.focus();
+        }
+
+        function renderTimeline() {
+            const tbody = document.getElementById('timelineBody');
+            
+            if (currentTimeline.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">タイムラインを追加してください ♡</td></tr>';
+                return;
+            }
+
+            // 現在の入力値を保存
+            const existingInputs = {};
+            tbody.querySelectorAll('.cell-input').forEach(input => {
+                const row = input.closest('tr');
+                if (row) {
+                    const rowIndex = Array.from(tbody.children).indexOf(row);
+                    const cellIndex = input.classList.contains('enemy-input') ? 'enemy' : 'player';
+                    if (!existingInputs[rowIndex]) existingInputs[rowIndex] = {};
+                    existingInputs[rowIndex][cellIndex] = input.value;
+                }
+            });
+
+            // ギミックタイプの選択値も保存
+            tbody.querySelectorAll('.gimmick-type').forEach(select => {
+                const row = select.closest('tr');
+                if (row) {
+                    const rowIndex = Array.from(tbody.children).indexOf(row);
+                    if (!existingInputs[rowIndex]) existingInputs[rowIndex] = {};
+                    existingInputs[rowIndex].gimmickType = select.value;
+                }
+            });
+
+            tbody.innerHTML = currentTimeline.map((row, index) => {
+                let rowClass = '';
+                if (timerRunning) {
+                    if (index === currentEventIndex) {
+                        rowClass = 'current-event';
+                    } else if (index < currentEventIndex) {
+                        rowClass = 'passed-event';
+                    }
+                }
+
+                // 保存された値があればそれを使用、なければデータの値を使用
+                const gimmickType = (existingInputs[index] && existingInputs[index].gimmickType !== undefined) 
+                    ? existingInputs[index].gimmickType 
+                    : (row.gimmickType || 'normal');
+                const enemyValue = (existingInputs[index] && existingInputs[index].enemy !== undefined) 
+                    ? existingInputs[index].enemy 
+                    : row.enemy;
+                const playerValue = (existingInputs[index] && existingInputs[index].player !== undefined) 
+                    ? existingInputs[index].player 
+                    : row.player;
+
+                return `
+                <tr class="${rowClass}">
+                    <td class="time-cell">${formatTime(row.time)}</td>
+                    <td class="enemy-cell">
+                        <div class="enemy-cell-wrapper">
+                            <select class="gimmick-type type-${gimmickType}" onchange="updateGimmickType(${index}, this.value); updateGimmickClass(this);">
+                                <option value="normal" ${gimmickType === 'normal' ? 'selected' : ''}>通常攻撃</option>
+                                <option value="aoe" ${gimmickType === 'aoe' ? 'selected' : ''}>全体攻撃</option>
+                                <option value="tank" ${gimmickType === 'tank' ? 'selected' : ''}>タンク強攻撃</option>
+                                <option value="danger" ${gimmickType === 'danger' ? 'selected' : ''}>要注意ギミック</option>
+                            </select>
+                            <input type="text" class="cell-input enemy-input" value="${enemyValue}" 
+                                   onchange="updateRow(${index}, 'enemy', this.value)">
+                        </div>
+                    </td>
+                    <td class="player-cell">
+                        <input type="text" class="cell-input player-input" value="${playerValue}" 
+                               onchange="updateRow(${index}, 'player', this.value)">
+                    </td>
+                    <td class="actions">
+                        <button class="btn-small danger" onclick="deleteRow(${index})">削除</button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function updateGimmickType(index, type) {
+            currentTimeline[index].gimmickType = type;
+        }
+
+        function updateGimmickClass(selectElement) {
+            selectElement.className = 'gimmick-type type-' + selectElement.value;
+        }
+
+        function updateRow(index, field, value) {
+            currentTimeline[index][field] = value;
+        }
+
+        function deleteRow(index) {
+            currentTimeline.splice(index, 1);
+            renderTimeline();
+        }
+
+        function clearTimeline() {
+            resetTimer();
+            currentTimeline = [];
+            currentTimelineName = '';
+            document.getElementById('timelineName').value = '';
+            renderTimeline();
+        }
+
+        function saveTimeline() {
+            const nameInput = document.getElementById('timelineName');
+            const name = nameInput.value.trim() || `タイムライン ${new Date().toLocaleString('ja-JP')}`;
+
+            if (currentTimeline.length === 0) {
+                return;
+            }
+
+            const timelines = getSavedTimelines();
+            timelines.push({
+                name: name,
+                data: currentTimeline,
+                savedAt: new Date().toISOString()
+            });
+
+            localStorage.setItem('ff14Timelines', JSON.stringify(timelines));
+            renderSavedTimelines();
+        }
+
+        function getSavedTimelines() {
+            const saved = localStorage.getItem('ff14Timelines');
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        function renderSavedTimelines() {
+            const timelines = getSavedTimelines();
+            const container = document.getElementById('savedTimelinesList');
+
+            if (timelines.length === 0) {
+                container.innerHTML = '<div class="empty-state">保存されたタイムラインはありません</div>';
+                return;
+            }
+
+            container.innerHTML = timelines.map((timeline, index) => `
+                <div class="timeline-item">
+                    <div class="timeline-item-name">${timeline.name}</div>
+                    <div class="timeline-item-actions">
+                        <button class="btn-small secondary" onclick="loadTimeline(${index})">読込</button>
+                        <button class="btn-small danger" onclick="deleteSavedTimeline(${index})">削除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadTimeline(index) {
+            const timelines = getSavedTimelines();
+            const timeline = timelines[index];
+
+            resetTimer();
+            currentTimeline = [...timeline.data];
+            currentTimelineName = timeline.name;
+            document.getElementById('timelineName').value = timeline.name;
+            renderTimeline();
+        }
+
+        function deleteSavedTimeline(index) {
+            const timelines = getSavedTimelines();
+            timelines.splice(index, 1);
+            localStorage.setItem('ff14Timelines', JSON.stringify(timelines));
+            renderSavedTimelines();
+        }
+
+        function exportTimeline() {
+            if (currentTimeline.length === 0) {
+                return;
+            }
+
+            const name = document.getElementById('timelineName').value.trim() || 'タイムライン';
+            const data = {
+                name: name,
+                data: currentTimeline,
+                exportedAt: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${name}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importTimeline() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        resetTimer();
+                        currentTimeline = data.data || [];
+                        currentTimelineName = data.name || '';
+                        document.getElementById('timelineName').value = currentTimelineName;
+                        renderTimeline();
+                    } catch (error) {
+                        console.error('ファイルの読み込みに失敗しました', error);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function importCSV() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const text = event.target.result;
+                        const lines = text.split('\n');
+                        
+                        // ヘッダー行をスキップ（1行目が「時間」を含む場合）
+                        const startIndex = lines[0].includes('時間') || lines[0].includes('分') ? 1 : 0;
+                        
+                        resetTimer();
+                        currentTimeline = [];
+                        
+                        for (let i = startIndex; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (!line) continue;
+                            
+                            const parts = line.split(',');
+                            if (parts.length >= 1) {
+                                const timeStr = parts[0].trim();
+                                
+                                // ギミックタイプがある場合（新形式）とない場合（旧形式）に対応
+                                let gimmickType = 'normal';
+                                let enemy = '';
+                                let player = '';
+                                
+                                if (parts.length >= 4) {
+                                    // 新形式: 時間,ギミックタイプ,敵の攻撃,自分のスキル
+                                    gimmickType = parts[1].trim() || 'normal';
+                                    enemy = parts[2] ? parts[2].trim() : '';
+                                    player = parts[3] ? parts[3].trim() : '';
+                                } else {
+                                    // 旧形式: 時間,敵の攻撃,自分のスキル
+                                    enemy = parts[1] ? parts[1].trim() : '';
+                                    player = parts[2] ? parts[2].trim() : '';
+                                }
+                                
+                                // 時間をパース（0:00形式または秒数）
+                                let timeInSeconds;
+                                if (timeStr.includes(':')) {
+                                    timeInSeconds = parseTime(timeStr);
+                                } else {
+                                    timeInSeconds = parseInt(timeStr) || 0;
+                                }
+                                
+                                currentTimeline.push({
+                                    time: timeInSeconds,
+                                    gimmickType: gimmickType,
+                                    enemy: enemy,
+                                    player: player
+                                });
+                            }
+                        }
+                        
+                        currentTimeline.sort((a, b) => a.time - b.time);
+                        renderTimeline();
+                    } catch (error) {
+                        console.error('CSVファイルの読み込みに失敗しました', error);
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            };
+            input.click();
+        }
+
+        function exportCSV() {
+            if (currentTimeline.length === 0) {
+                return;
+            }
+
+            const name = document.getElementById('timelineName').value.trim() || 'タイムライン';
+            
+            // CSVヘッダー
+            let csv = '時間,ギミックタイプ,敵の攻撃,自分のスキル\n';
+            
+            // データ行
+            currentTimeline.forEach(row => {
+                const time = formatTime(row.time);
+                const gimmickType = row.gimmickType || 'normal';
+                const enemy = row.enemy.replace(/,/g, '，'); // カンマをエスケープ
+                const player = row.player.replace(/,/g, '，');
+                csv += `${time},${gimmickType},${enemy},${player}\n`;
+            });
+
+            // BOM付きUTF-8でダウンロード（Excelで文字化けしないように）
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${name}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 初期化
+        renderSavedTimelines();
+        renderTimeline();
+
+        // ギミックタイプの選択時に色を変更
+        document.getElementById('gimmickTypeInput').addEventListener('change', function() {
+            this.className = 'gimmick-type type-' + this.value;
+        });
+
+        // Enterキーで追加
+        document.getElementById('enemyInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addRow();
+        });
+        document.getElementById('playerInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addRow();
+        });
+    </script>
+</body>
+</html>
