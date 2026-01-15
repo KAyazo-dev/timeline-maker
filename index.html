@@ -914,7 +914,7 @@
         let currentTimelineName = '';
         let timerRunning = false;
         let timerInterval = null;
-        let elapsedTime = 0;
+        let elapsedTime = -5; // -5秒からスタート
         let currentEventIndex = -1;
 
         function parseTime(timeStr) {
@@ -928,9 +928,12 @@
         }
 
         function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
+            const isNegative = seconds < 0;
+            const absSeconds = Math.abs(seconds);
+            const mins = Math.floor(absSeconds / 60);
+            const secs = absSeconds % 60;
+            const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+            return isNegative ? `-${timeStr}` : timeStr;
         }
 
         function startTimer() {
@@ -963,7 +966,7 @@
 
         function resetTimer() {
             pauseTimer();
-            elapsedTime = 0;
+            elapsedTime = -5;
             currentEventIndex = -1;
             updateTimerDisplay();
             updateCurrentEvent();
@@ -976,6 +979,24 @@
         }
 
         function updateCurrentEvent() {
+            // カウントダウン中の表示
+            if (elapsedTime < 0) {
+                document.getElementById('timerInfo').style.display = 'block';
+                for (let i = 1; i <= 3; i++) {
+                    if (i === 1) {
+                        document.getElementById(`eventCountdown${i}`).textContent = '準備中...';
+                        document.getElementById(`eventTime${i}`).textContent = '開始まで';
+                        document.getElementById(`eventBadge${i}`).innerHTML = '';
+                        document.getElementById(`eventName${i}`).textContent = `あと ${Math.abs(elapsedTime)}秒`;
+                        document.getElementById(`eventPlayer${i}`).textContent = '';
+                        document.getElementById(`eventCard${i}`).style.display = 'block';
+                    } else {
+                        document.getElementById(`eventCard${i}`).style.display = 'none';
+                    }
+                }
+                return;
+            }
+
             // 現在のイベントを見つける
             let newCurrentIndex = -1;
             for (let i = 0; i < currentTimeline.length; i++) {
